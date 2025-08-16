@@ -2,8 +2,6 @@
 Testing hypotheses on health and lifestyle factors influencing stroke risk in R. (Badanie hipotez dotyczących czynników zdrowotnych i stylu życia wpływających na ryzyko udaru w R.)
 
 
-# Stroke-prediction-hypotheses
-
 ## Opis projektu
 Celem badania było porównanie danych osób, które przeszły udar mózgu oraz tych, które go nie doświadczyły, 
 aby spróbować przewidywać możliwość wystąpienia udaru u pacjentów o podobnych wynikach i cechach zdrowotnych.  
