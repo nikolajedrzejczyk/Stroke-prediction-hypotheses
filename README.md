@@ -8,6 +8,8 @@ Celem badania było porównanie danych osób, które przeszły udar mózgu oraz 
 
 Projekt został zrealizowany w języku **R** na podstawie zbioru danych [Stroke Prediction (Kaggle)](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset). [Luty 2023]
 
+Projekt wykonany w ramach studiów.
+
 ---
 
 ## Hipotezy badawcze:
