@@ -1,10 +1,10 @@
 # Stroke-prediction-hypotheses
 Testing hypotheses on health and lifestyle factors influencing stroke risk in R. (Badanie hipotez dotyczących czynników zdrowotnych i stylu życia wpływających na ryzyko udaru w R.)
 
+---
 
 ## Opis projektu
-Celem badania było porównanie danych osób, które przeszły udar mózgu oraz tych, które go nie doświadczyły, 
-aby spróbować przewidywać możliwość wystąpienia udaru u pacjentów o podobnych wynikach i cechach zdrowotnych.  
+Celem badania było porównanie danych osób, które przeszły udar mózgu oraz tych, które go nie doświadczyły, aby spróbować przewidywać możliwość wystąpienia udaru u pacjentów o podobnych wynikach i cechach zdrowotnych.  
 
 Projekt został zrealizowany w języku **R** na podstawie zbioru danych [Stroke Prediction (Kaggle)](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset).  
 
@@ -21,24 +21,24 @@ Celem badania było sprawdzenie, czy niekorzystne wskaźniki zdrowotne lub warun
 
 ## Etapy analizy
 1. **Wstępne czyszczenie danych**  
-   - zmiana typów zmiennych,  
-   - zamiana nazw z angielskich na polskie,  
-   - uzupełnianie braków (np. status palenia u dzieci).  
+   - zmiana typów zmiennych  
+   - zamiana nazw z angielskich na polskie 
+   - uzupełnianie braków
 
 2. **Podstawowe statystyki opisowe**  
-   - rozkłady wieku, BMI, poziomu glukozy,  
-   - charakterystyka grup (płeć, miejsce zamieszkania, status cywilny, palenie papierosów).  
+   - rozkłady zmiennych
+   - charakterystyka grup
 
 3. **Analiza hipotez badawczych**  
-   - dla każdej hipotezy przygotowano wykresy (histogramy, wykresy punktowe, wykresy korelacji),  
-   - oceniono zależności między zmiennymi.  
+   - dla każdej hipotezy przygotowano wykresy (histogramy, wykresy punktowe, wykresy korelacji)
+   - oceniono zależności między zmiennymi 
 
 4. **Budowa modeli regresji liniowej**  
-   - **Model 1**: wpływ BMI i palenia na ryzyko udaru,  
-   - **Model 2**: wpływ BMI i poziomu glukozy na ryzyko udaru,  
-   - **Model 3**: wpływ miejsca zamieszkania i statusu cywilnego na BMI.  
+   - **Model 1**: wpływ BMI i palenia na ryzyko udaru
+   - **Model 2**: wpływ BMI i poziomu glukozy na ryzyko udaru  
+   - **Model 3**: wpływ miejsca zamieszkania i statusu cywilnego na BMI
 
 5. **Wnioski**  
-   - BMI i palenie papierosów mają istotny wpływ na wystąpienie udaru,  
-   - poziom glukozy jest silniejszym czynnikiem ryzyka niż BMI,  
-   - status małżeński wpływa na BMI, ale miejsce zamieszkania nie ma istotnego znaczenia.  
+   - BMI i palenie papierosów mają istotny wpływ na wystąpienie udaru.  
+   - Poziom glukozy jest silniejszym czynnikiem ryzyka niż BMI.
+   - Status małżeński wpływa na BMI, ale miejsce zamieszkania nie ma istotnego znaczenia.  
