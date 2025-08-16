@@ -1,0 +1,469 @@
+---
+title: "Projekt końcowy"
+author: Nikola Jędrzejczyk
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Zbiór danych: 
+
+Dane zostały pobrane ze strony Kaggle: https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset
+
+```{r}
+dane1 <- read.csv("full_data.csv")
+```
+
+<ul>
+Zbiór ten zawiera informacje zebrane od osób, z różnych grup wiekowych.
+Pacjenci odpowiadali na pytania związane ze zdrowiem i prowadzonym trybem życia.
+</ul>
+<ul>
+Celem badania było porównanie danych o osobach, które miały udar mózgu oraz tych, które go nie przeszły, aby skutecznie przewidywać możliwość zachorowania na wspomniany przed chwilą udar u osób, których wyniki są bardzo podobne do tych, którzy go przeszli.
+</ul>
+<ul>
+Poza podstawowymi danymi takimi jak wiek i płeć, zebrano informacje między innymi na temat wskaźnika BMI, poziomu glukozy, rodzaju pracy, miejsca zamieszkania oraz czy pacjent choruje na nadciśnienie.
+</ul>
+  
+
+# Opis zmiennych: 
+
+zmienna:          opis:
+--------          ----
+`gender:`         płeć (kobieta lub mężczyzna)
+`age:`            wiek
+`hypertension:`   nadciśnienie (tak lub nie)
+`heart_disease:`  choroby serca (tak lub nie)
+`ever_married:`   czy pacjent jest żonaty? (tak lub nie)
+`work_type:`      rodzaj pracy (prywatna, własna działalność gospodarcza, praca rządowa, nie pracuje, bo to dziecko)
+`residence_type:` miejsce zamieszkania (miasto lub wieś)
+`glucose_level:`  poziom glukozy
+`bmi:`            wskaźnik masy ciała
+`smoking_status:` status palacza (nigdy nie palił, palił kiedyś, pali teraz, nieznany)
+`stroke:`         czy pacjent miał udar mózgu? (0 - niemiał lub 1 - miał)
+
+# Hipotezy badawcze: 
+
+<ul>
+1) Osoby, które mają niepoprawne BMI lub palą papierosy częściej przechodzą udar mózgu.
+</ul>
+<ul>
+2) Nieodpowiednie wyniki BMI i zły poziom glukozy we krwi zwiększają prawdopodobieństwo wystąpienia udaru mózgu.
+</ul>
+<ul>
+3) Osoby mieszkające w mieście i będące w związku małżeńskim mają wyższe BMI.
+</ul>
+<ul>
+Jako cel obrano sprawdzenie czy złe wyniki, wskaźniki lub warunki życia mogą ostrzegać przed zwiększonym ryzykiem groźnych chorób.
+</ul>
+
+# Wstępne czyszczenie i przygotowanie danych do pracy: 
+
+<ul>
+Pracę rozpoczynamy od zamiany dbl na int w przypadku wieku oraz angielskich nazw i oznaczeń: 0, 1 z oryginalnego pliku na polskie nazwy, między innymi dla wygody. Zdecydowano się również, aby zmienić status palenia z nieznanego na nigdy w przypadku dzieci poniżej 10 roku życia.
+</ul>
+
+```{r}
+head(dane1, 1)
+```
+
+```{r}
+dane1$gender <- factor(dane1$gender , levels = c(kobieta = "Female",
+                mezczyzna = "Male"), labels = c("kobieta", "mezczyzna"))
+
+dane1$hypertension <- factor(dane1$hypertension , levels = c(nie = 0, 
+                      tak = 1), labels = c("nie", "tak"))
+
+dane1$heart_disease <- factor(dane1$heart_disease , levels = c(nie = 0, 
+                       tak = 1), labels = c("nie", "tak"))
+
+dane1$ever_married <- factor(dane1$ever_married , levels = c(nie = "No", 
+                      tak = "Yes"), labels = c("nie", "tak"))
+
+dane1$Residence_type <- factor(dane1$Residence_type , levels = c(wies = "Rural",
+                        miasto = "Urban"), labels = c("wies", "miasto"))
+
+dane1$work_type <- factor(dane1$work_type , levels = c(prywatna = "Private",
+                   dzialalnosc = "Self-employed", rzadowa = "Govt_job",
+                   nie_pracuje_to_dziecko = "children"), 
+                   labels = c("prywatna", "dzialalnosc", "rzadowa", "nie_pracuje_to_dziecko"))
+
+dane1$smoking_status <- factor(dane1$smoking_status , levels = 
+                        c(nigdy = "never smoked", kiedys = "formerly smoked",
+                        pali = "smokes", nieznany = "Unknown"), 
+                        labels = c("nigdy", "kiedys", "pali", "nieznany"))
+
+dane1$stroke <- factor(dane1$stroke , levels = c(nie_mial = 0, 
+                mial = 1), labels = c("nie_mial", "mial"))
+
+dane1$age <- as.integer(dane1$age) #zmieniamy na pełne, ukończone lata
+
+dane1$smoking_status[which(dane1$age < 11)] <- factor(dane1$smoking_status[which(dane1$age < 11)], levels = c(nigdy = "nieznany"), labels = c("nigdy"))
+
+head(dane1, 2) #wyświetlamy dla sprawdzenia czy zaszły zmiany:
+```
+
+# Podstawowe statystyki:
+
+```{r}
+lapply(dane1, summary)
+```
+\newpage
+
+**Wniosek:**
+<ul>
+Na początku możemy przytoczyć pare faktów:
+</ul>
+<ul>
+1) W badaniu brały udział również dzieci i niemowlęta.
+</ul>
+<ul>
+2) Większość badanych choruje na nadciśnienie, ale też w przypadku większości nie stwierdzono chorób serca.
+</ul>
+<ul>
+Zdrowy dorosły człowiek o prawidłowym stosunku wagi do wzrostu ma wskaźnik w granicach 18,5–24,9. BMI poniżej 18,5 informuje o niedowadze. Osoby ze wskaźnikiem BMI 25,0-29,9 cierpią na nadwagę. Współczynnik BMI powyżej 30,0 to już otyłość.
+</ul>
+<ul>
+3) Wnioskujemy z tego, że średnie BMI badanych jest niepokojąco wysokie. Maksymalna wartość i mediana są niemalże dwukrotnie większe niż zdrowe BMI. A Najmniejsza wartość BMI świadczy o niedowadze.
+</ul>
+<ul>
+Norma poziomu cukru we krwi dla osób dorosłych wynosi: na czczo 80–140. Natomiast norma glukozy na czczo u dzieci to 70–100 mg/dl.
+</ul>
+<ul>
+4) W przypadku poziomu glukozy: średnia i mediana wypadają bardzo dobrze, jednak jak możemy zauważyć znów pojawiają się osoby ze zbyt niskim i ze zbyt, bo aż ponad dwukrotnie za wysokim wynikiem. 
+</ul>
+<ul>
+5) W badaniu bierze udział o 1/3 więcej kobiet niż mężczyzn, ale grupy zawierające osoby mieszkające na wsi i w mieście są zbliżonej wielkości.Na szczęście zdecydowanie przeważa ilość osób dorosłych nad dziećmi.
+</ul>
+<ul>
+6) Zdecydowana większość badanych nie miała udaru mózgu.
+
+\
+**Sprawdzamy braki:**
+```{r}
+lapply(lapply(dane1, is.na), sum)
+```
+**Wniosek:**
+Na szczęście nie mamy żdanych braków.
+
+# Analiza zależności: 
+
+Początkowo staramy się zidentyfikować zmienne zależne, niezależne oraz towarzyszące. W dalszej części na podstawie wykresów pokażemy, że wiek jest zmienną towarzyszącą.
+
+
+**Sprawdzamy korelacje między zmiennymi numerycznymi:**
+```{r}
+cor(dane1[sapply(dane1, is.numeric)])
+```
+**Wniosek:**
+
+1) Występuje tylko korelacja dodatnia, zważając na to, że są to realne dane to mimo, iż korelacje nie wydają się wysokie - uważamy, że jest w porządku.
+
+2) Wykorzystamy interpretacje wykresów do wyciągnięcia wiecej wniosków.
+
+\newpage
+
+# Dla hipotezy pierwszej:
+```{r}
+library(GGally)
+library(ggplot2)
+```
+
+**Zaczniemy od porównania wieku oraz występowania udaru:**
+ 
+```{r}
+ggplot(dane1, aes(x = age, fill = stroke)) + geom_histogram()
+```
+
+**Wniosek:**
+Widzimy wyraźnie, że z wiekiem rośnie ilość osób, które miały udar mózgu, zatem im człowiek straszy tym większe prawdopodobieństwo, że będzie miał udar.
+Wnioskujemy z tego, że wiek jest zmienną towarzyszącą.
+
+
+\newpage
+
+**Teraz spójrzmy jak wygląda status palenia w zależności od BMI:**
+
+```{r}
+ggplot(dane1, aes(x = bmi, fill = smoking_status)) + geom_histogram()
+```
+**Wniosek:**
+Na wykresie widać, że w każdej grupie "statusu palenia", BMI rozkłada się w podobny sposób. Co wypada pozytywnie - zdecydowana większość nie pali, bądź przestała, bo paliła kiedyś. Niestety status nieznany może trochę negatywnie wpływać na wyniki.
+
+\newpage
+
+**Spójrzmy jeszcze czy BMI rośnie z wiekiem i jak mają się te dwie zmienne do udaru:**
+
+W tym celu musimy przygotować sobie pomocnicze dane:
+```{r}
+dane1_nie_mial <- dane1[dane1$stroke == "nie_mial",]
+dane1_mial <- dane1[dane1$stroke == "mial",]
+
+ggplot(dane1, aes(x = age, y = bmi)) +
+    geom_point(
+        data = dane1_nie_mial,
+        aes(colour = "nie_mial")) +
+    geom_point(
+        data = dane1_mial, 
+        aes(colour = "mial")) +
+    geom_smooth(method = "lm")
+```
+**Wniosek:**
+Mamy trend rosnący.
+
+\newpage
+
+**Na koniec porównajmy zmienne wystepujące w hipotezie pierwszej:**
+```{r}
+df1 = data.frame(dane1$bmi, dane1$smoking_status, dane1$stroke)
+ggpairs(df1)
+```
+**Wniosek:**
+
+1) Rzuca się w oczy, że przeważa ilość osób, które nie doświadczyły udaru.
+
+2) Jeżeli spróbujemy porównać osoby które miały udar i te, które nie miały w zależności od tego czy palą - wyraźnie widać, że w przypadku osób, które nie miały udaru, znacznie więcej pacjentów wybrało opcję "nigdy nie paliłem" niż w przypadku osób, które miały udar.
+
+3) Porównując BMI i ststus palenia - definitywnie odznacza się, że osoby, które nigdy nie paliły częściej mają niższe i lepsze BMI niż w pozostałych sytuacjach.
+
+
+\newpage
+
+# Dla hipotezy drugiej:
+
+**Z ciekawości spójrzmy na poziom glukozy i płeć:**
+
+Zaznaczę również przedział dobrzego poziomu glukozy
+```{r}
+ggplot(dane1, aes(x = glucose_level, fill = gender)) + geom_histogram() + geom_vline(xintercept = 70) + geom_vline(xintercept = 140)
+```
+
+
+**Wniosek:**
+Mimo, iż przeważa ilośc kobiet w tym badaniu widzimy, że płeć nie ma znaczenia. Rozkłady ilościowe wyglądają bardzo podobnie. Wnioskujemy z tego, że średnio tyle samo kobiet co mężczyzn ma za niski lub za wysoki poziom glukozy.
+
+\newpage
+
+**A czy jest różnica w przypadku BMI?**
+Dodaję również przedziały dla poprawnego BMI.
+```{r}
+ggplot(dane1, aes(x = bmi, fill = gender)) + geom_histogram() + geom_vline(xintercept = 18.5) + geom_vline(xintercept = 24.9)
+```
+**Wniosek:**
+Jest dokładnie tak samo jak w przypadku glukozy.
+
+\newpage
+
+**Teraz chcemy zobaczyć jaka jest zależność między poziomem BMI i poziomem glukozy w przełożeniu na wystąpienie udaru:**
+
+W tym celu musimy przygotować sobie pomocnicze dane:
+```{r}
+dane1_nie_mial <- dane1[dane1$stroke == "nie_mial",]
+dane1_mial <- dane1[dane1$stroke == "mial",]
+
+ggplot(dane1, aes(x = bmi, y = glucose_level )) + 
+    geom_point(
+        data = dane1_nie_mial,
+        aes(colour = "nie_mial")) +
+    geom_point(
+        data = dane1_mial, 
+        aes(colour = "mial")) +
+  
+    geom_hline(yintercept = 70) + 
+    geom_hline(yintercept = 140) + 
+    geom_vline(xintercept = 18.5) + 
+    geom_vline(xintercept = 24.9) +
+    geom_smooth(method = "lm")
+```
+
+\newpage
+
+**Wniosek:**
+Z wykresu można wyraźnie zauważyć, że przy nieodpowiednim poziomie glukozy i BMI dużo częściej występuje udar. Zapewne ma to też związek z tym, że niewiele osób ma "idealne" wyniki. 
+<ul>
+Na wykresie zaznaczono przedział z odpowiednim poziomem glukozy i BMI.
+Osoby, które mają dobre wyniki należą do powstałego na wykresie prostokąta.
+<ul/>
+Czerwone kropki przeważają u góry , na prawo, co znaczy, że wyższe BMI towarzyszy przy występowaniu udaru częściej niż niższe.
+Największe skupisko znajduje się jednak w granicy dobrego poziomu glukozy i trochę zbyt wysokiego BMI.
+
+\
+
+**Na koniec porównajmy zmienne wystepujące w hipotezie drugiej:**
+```{r}
+df2 = data.frame(dane1$bmi, dane1$glucose_level, dane1$stroke)
+ggpairs(df2)
+```
+**Wniosek:**
+
+1) Korelacja między BMI, a poziomem glukozy jest dodatnia. Wydaje się słaba, ale zważając na to, że są to realne dane, a nie laboratoryjne - korelacja ta jest w porządku. Poza tym - trzy gwiazdki sugerują, że są to istotne statystycznie dane.
+
+2) Niepokojąco dużo osób z wysokim BMI ma strasznie wysoki poziom glukozy. Widzimy to wyrażnie na środkowym wykresie w pierwszej kolumnie. Lewy dolny róg jest pełen punktów, u góry jednak dominuje środkowa część. Przy wysokim BMI jednak tych punktów wydaje się być więcej.
+
+3) Mediana BMI widoczna na wykresie pudełkowym jest wyższa w przypadku osób, które miały udar. Tak samo w przypadku poziomu glukozy.
+
+4) Jest spora różnica między kwantylami 1 i 3 w przypadku poziomu glukozy i wystąpienia udaru.
+
+\newpage
+ 
+# Dla hipotezy trzeciej:
+
+**Na początek porównajmy zmienne wiek, bmi i status małżeński:**
+
+Musimy zaznaczyć fakt, że dopiero od pewnego wieku można wziąć ślub, więc dzieci tutaj odpadają.
+```{r}
+dane1_nie <- dane1[dane1$ever_married == "nie",]
+dane1_tak <- dane1[dane1$ever_married == "tak",]
+
+ggplot(dane1, aes(x = age, y = bmi)) + 
+    geom_point(
+        data = dane1_tak,
+        aes(colour = "tak")) +
+    geom_point(
+        data = dane1_nie, 
+        aes(colour = "nie")) + geom_smooth(method = "lm")
+```
+**Wniosek:**
+Zdecydowanie widać, że średnio ludzie w związku małżeńskim mają dużo wyższe BMI. Z wiekiem występuje trend rosnący.
+
+\newpage
+
+**Spójrzmy jeszcze na dane o miejscu zamieszkania:**
+```{r}
+ggplot(dane1, aes(x = age, y = bmi)) + geom_point(aes(color = Residence_type)) + geom_smooth(method = "lm")
+```
+**Wniosek:**
+Z racji, że w badaniu wzięła udział podobna ilość osób mieszkających na wsi i w mieście ciężko wyciągnąć jendoznaczny wniosek z wykresu.
+
+\newpage
+
+**Dla upewnienia spójrzmy ostatni raz na zależności między wiekiem, BMI, a płcią:**
+```{r}
+ggplot(dane1, aes(x = age, y = bmi)) + geom_point(aes(color = gender)) + geom_smooth(method = "lm")
+```
+**Wniosek:**
+Może się delikatnie zdawać, że mężczyźni mają ciut wyższe BMI, jednak tak jak wcześniej zauważono: niezależnie od płci, BMI rośnie z wiekiem.
+
+\newpage
+
+**Na koniec porównajmy zmienne wystepujące w hipotezie trzeciej:**
+```{r}
+df3 = data.frame(dane1$bmi, dane1$Residence_type, dane1$ever_married)
+ggpairs(df3)
+```
+**Wniosek:**
+
+1) W przypadku miejsca zamieszkania nie widac prawie żadnej różnicy.
+
+2) Za to status małżeński ma ogromny wpływ na wysokość BMI. W lewym dolnym rogu mamy wykres, który bardzo dobrze pokazuje, iż osoby, które wyszły za mąż mają dużo wyższe BMI i mają problemy z nadwagą czy otyłością. W przypadku osób, które nie mają ślubu pojawia się częściej inny problem - niedowaga. 
+Na wykresie pudełkowym w prawym górnym rogu widać, że średnie BMI jest dużo większe dla osób po ślubie.
+
+\newpage
+
+
+
+# Model pierwszy:
+
+Po pierwsze musimy zamienić w zmiennej stroke oznaczenia na 0 - nie miał i 1 - miał, ponieważ inaczej nie będziemy mogli zbudowac modelu.
+
+```{r}
+dane1_od_nowa <- read.csv("full_data.csv")
+dane1$stroke <- dane1_od_nowa$stroke
+```
+
+**Wykresy diagnostyczne:**
+```{r}
+model1 <- lm(stroke ~ bmi + smoking_status, dane1)
+summary(model1)
+```
+**Wniosek:**
+
+1) Sprawdzono i nie ma interakcji. Zatem korzystamy z "+".
+
+2) Wyraźnie widać, że wysokość BMI oraz status palenia mają wpływ na to czy osoba przeszła udar. (Patrzymy na ilość gwiazdek)
+
+\newpage
+
+**Sprawdzimy jeszcze kryterium i błąd średniokwadratowy:**
+```{r}
+extractAIC(model1)
+```
+```{r}
+sqrt(mean(model1$residuals^2))
+```
+**Wniosek:**
+
+RMSE wypada całkiem nieźle, tak samo jak kryterium AIC.
+
+# Wniosek do hipotezy pierwszej:
+
+Model potwierdza słuszność hipotezy. BMI, tak jak status palenia wywierają znaczący wpływ na wystąpienie udaru.
+
+
+\newpage
+
+# Model drugi:
+```{r}
+model2 <- lm(stroke ~ bmi + glucose_level, dane1)
+summary(model2)
+```
+```{r}
+cor.test(dane1$bmi, dane1$glucose_level)
+```
+
+```{r}
+t.test(dane1$bmi, dane1$glucose_level)
+```
+\newpage
+
+**Wniosek:**
+
+1) Poziom glukozy jest bardziej istotny statystycznie niż BMI, ale gdyby przyjęto poziom istotności 0.05 to również można by powiedzieć, że jest on istotny statystycznie.
+
+2) Nie wystepuje interakcja między poziomem glukozy i BMI.
+
+**Sprawdzimy jeszcze kryterium i błąd średniokwadratowy:**
+```{r}
+extractAIC(model2)
+```
+```{r}
+sqrt(mean(model2$residuals^2))
+```
+**Wniosek:**
+Tak jak poprzednio jest całkiem.
+
+# Wniosek do hipotezy drugiej:
+Niestety hipoteza nie jest całkowicie prawdziwa, ponieważ to poziom glukozy ma dużo większy wpływ na występowanie udaru. 
+<ul>
+Nie mozemy jednak powiedzieć, że obie te zmienne w połączeniu częściej powodują udar.
+<ul/>
+
+
+\newpage
+
+# Model trzeci:
+
+```{r}
+model3 <- lm(bmi ~ ever_married * Residence_type, dane1)
+summary(model3)
+```
+**Wniosek:**
+
+1) R-squared wynosi 0.1383
+
+2) Nie występuje interakcja między statusem cywilnym, a miejscem zamieszkania.
+
+3) Możemy tez wywnioskować, że życie w małżeństwie wywiera ogromny wpływ na wysokość BMI.
+
+4) Miejsce zamieszkania nie ma żadnego istotnego statystycznie wpływu na BMI.
+
+# Wniosek do hipotezy trzeciej:
+Ponownie nie możemy potwierdzić słuszności hipotezy. Owszem życie w związku małżeńskim wywiera ogromny wpływ na BMI, ale życie w mieście nie ma żadnego istotnego statystycznie znaczenia.
+
+
+
